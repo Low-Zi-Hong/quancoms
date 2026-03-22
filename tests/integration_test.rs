@@ -1,5 +1,5 @@
-use quancoms::qubit::{self, QuantumRegister};
 use quancoms::complex;
+use quancoms::qubit::{self, QuantumRegister};
 
 #[test]
 fn test_X() {
@@ -88,8 +88,7 @@ fn test_Rz() {
 }
 
 #[test]
-fn test_U()
-{
+fn test_U() {
     let mut q = QuantumRegister::new(2);
     let inv_sqrt2 = 1.0 / 2.0_f64.sqrt();
     let c_val = complex::Complex::new(inv_sqrt2, 0.0);

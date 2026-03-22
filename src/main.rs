@@ -36,12 +36,12 @@ fn main() {
     q2.CCNOT(0, 2, 1).unwrap();
     q2.X(4).unwrap();
     q2.Rx(0, 2.55);
-    q2.Ry(0,2.3);
-    q2.Rz(0,2.3);
-    
-    println!("{:?}",q2.god_observe());
+    q2.Ry(0, 2.3);
+    q2.Rz(0, 2.3);
+
+    println!("{:?}", q2.god_observe());
     let r = q2.observe_one(0);
 
-    println!("{}",r);
-    println!("{:?}",q2.god_observe());
+    println!("{}", r);
+    println!("{:?}", q2.god_observe());
 }

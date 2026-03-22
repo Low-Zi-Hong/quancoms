@@ -51,36 +51,35 @@ impl QuantumRegister {
         self.state.fill(Complex { re: 0.0, im: 0.0 });
         self.state[hit_index].re = 1.0;
 
-
         DiracKet {
             value: hit_index,
             width: self.qubits,
         }
     }
 
-    pub fn observe_one(&mut self, target:usize) -> DiracKet{
-
+    pub fn observe_one(&mut self, target: usize) -> DiracKet {
         //high state
         let bit = self.size >> 1_usize;
         let mut low_prob = 0.0;
         for x in 0..bit {
-            let low =
-                ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
-            let high = low | (1_usize << target);
+            let low = ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
 
             low_prob += Complex::prob(self.state[low]);
         }
 
         let dart: f64 = rand::random();
-        let hit_index:usize = if dart > low_prob {1} else {0};
+        let hit_index: usize = if dart > low_prob { 1 } else { 0 };
 
-        let final_prob = if hit_index == 0 {low_prob} else {1.0-low_prob};
+        let final_prob = if hit_index == 0 {
+            low_prob
+        } else {
+            1.0 - low_prob
+        };
 
         let norm_factor = final_prob.sqrt();
 
         for x in 0..bit {
-            let low =
-                ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
+            let low = ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
             let high = low | (1_usize << target);
 
             if hit_index == 0 {
@@ -92,11 +91,12 @@ impl QuantumRegister {
                 self.state[low] = Complex { re: 0.0, im: 0.0 };
                 self.state[high] = self.state[high] / norm_factor;
             }
-
         }
 
-
-        DiracKet { value: hit_index, width: 1 }
+        DiracKet {
+            value: hit_index,
+            width: 1,
+        }
     }
 
     /*This will observe the state of qubit but not collapsing it. */
