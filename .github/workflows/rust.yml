@@ -1,6 +1,5 @@
 name: Rust CI
 
-# 👇 这里就是机器人点火的触发器 (Event Triggers)
 on:
   push:
     branches: [ "main" ]
@@ -12,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable
