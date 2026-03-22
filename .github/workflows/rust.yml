@@ -1,0 +1,27 @@
+name: Rust CI
+
+# 👇 这里就是机器人点火的触发器 (Event Triggers)
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Run Format Check
+      run: cargo fmt --all -- --check
+
+    - name: Run Clippy
+      run: cargo clippy -- -D warnings
+
+    - name: Run Tests
+      run: cargo test --verbose
