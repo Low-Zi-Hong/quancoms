@@ -12,6 +12,7 @@ pub struct QuantumRegister {
     size: usize,
 }
 
+#[allow(non_snake_case)]
 impl QuantumRegister {
     pub fn new(n: usize) -> Self {
         let _size = 1 << n;
@@ -58,18 +59,18 @@ impl QuantumRegister {
     /*This will observe the state of qubit but not collapsing it. */
     pub fn god_observe(&mut self) -> Vec<f64> {
         let mut prob = vec![0.0; self.size];
-        for x in 0..prob.len() {
+        for (x,val) in prob.iter_mut().enumerate() {
             let real = self.state[x].re;
             let imag = self.state[x].im;
 
-            prob[x] = real * real + imag * imag;
+            *val = real * real + imag * imag;
         }
         prob
     }
 
     /*This block is slightly slower */
     #[allow(dead_code)]
-    pub fn impl_X(&mut self, target: usize) {
+    pub fn impl_x(&mut self, target: usize) {
         if target >= self.qubits {
             panic!("target out of range!");
         } else {
@@ -133,7 +134,7 @@ impl QuantumRegister {
                     let mut s1 = ((x >> control) << (control + 1_usize))
                         ^ (x & ((1_usize << control) - 1_usize));
                     //insert control bit
-                    s1 = s1 | (1_usize << control);
+                    s1 |= 1_usize << control;
                     //insert target
                     let low = ((s1 >> target) << (target + 1_usize))
                         ^ (s1 & ((1_usize << target) - 1_usize));
