@@ -14,6 +14,7 @@ pub struct QuantumRegister {
 
 #[allow(non_snake_case)]
 impl QuantumRegister {
+    #[allow(dead_code)]
     pub fn new(n: usize) -> Self {
         let _size = 1 << n;
         let mut v = vec![Complex::new(0.0, 0.0); _size];
@@ -57,6 +58,7 @@ impl QuantumRegister {
     }
 
     /*This will observe the state of qubit but not collapsing it. */
+    #[allow(dead_code)]
     pub fn god_observe(&mut self) -> Vec<f64> {
         let mut prob = vec![0.0; self.size];
         for (x, val) in prob.iter_mut().enumerate() {
@@ -86,6 +88,7 @@ impl QuantumRegister {
     }
 
     /*Swaping the target qubit. Swap both state at index "target" bit. */
+    #[allow(dead_code)]
     pub fn X(&mut self, target: usize) -> Result<&mut Self, String> {
         if target >= self.qubits {
             return Err("...".into());
@@ -102,6 +105,7 @@ impl QuantumRegister {
     }
 
     /*Making the possibility of state at bit "target" to the same. */
+    #[allow(dead_code)]
     pub fn H(&mut self, target: usize) -> Result<&mut Self, String> {
         if target >= self.qubits {
             return Err("...".into());
@@ -123,6 +127,7 @@ impl QuantumRegister {
     }
 
     /*If the "control" bit of the state is 1, then swap at the "target" bit.  */
+    #[allow(dead_code)]
     pub fn CNOT(&mut self, control: usize, target: usize) -> Result<&mut Self, String> {
         if target >= self.qubits || control >= self.qubits || control == target {
             return Err("...".into());
@@ -154,6 +159,7 @@ impl QuantumRegister {
         Ok(self)
     }
 
+    #[allow(dead_code)]
     pub fn CCNOT(
         &mut self,
         control1: usize,
@@ -190,6 +196,7 @@ impl QuantumRegister {
     }
 
     /*Theta here use radian ha :D */
+    #[allow(dead_code)]
     pub fn Rz(&mut self, target: usize, theta: f64) -> Result<&mut Self, String> {
         if target >= self.qubits {
             return Err("...".into());
@@ -211,6 +218,7 @@ impl QuantumRegister {
     }
 
     /*Theta here use radian ha :D */
+    #[allow(dead_code)]
     pub fn Rx(&mut self, target: usize, theta: f64) -> Result<&mut Self, String> {
         if target >= self.qubits {
             return Err("...".into());
@@ -235,6 +243,7 @@ impl QuantumRegister {
     }
 
     /*Theta here use radian ha :D */
+    #[allow(dead_code)]
     pub fn Ry(&mut self, target: usize, theta: f64) -> Result<&mut Self, String> {
         if target >= self.qubits {
             return Err("...".into());

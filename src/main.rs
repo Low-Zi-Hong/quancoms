@@ -1,13 +1,8 @@
 use crate::qubit::QuantumRegister;
-use env_logger;
-use log::{info, warn};
-
 mod complex;
 mod qubit;
 
-//test
-use std::time::Instant;
-
+#[allow(unused)]
 fn main() {
     println!("Hello, world!");
     env_logger::init();
@@ -19,7 +14,7 @@ fn main() {
 
     let n = 3;
     let mut quantum = QuantumRegister::new(n);
-    let mut quantum2 = QuantumRegister::new(n);
+    //let mut quantum2 = QuantumRegister::new(n);
     quantum.X(0);
     print!("{:?}", quantum.god_observe());
     quantum.H(0);
