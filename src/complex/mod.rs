@@ -19,7 +19,7 @@ impl fmt::Display for Complex {
 }
 
 /*Define operators for Complex numbers */
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 impl Add for Complex{
     type Output = Self;
@@ -32,6 +32,13 @@ impl Sub for Complex{
     type Output = Self;
     fn sub(self, other: Self) -> Self::Output {
         Self {re: self.re - other.re,im:self.im - other.im}
+    }
+}
+
+impl Neg for Complex{
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        Self {re: - self.re, im: - self.im}
     }
 }
 

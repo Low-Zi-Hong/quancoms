@@ -27,6 +27,7 @@ fn main() {
     quantum.CNOT(0, 1);
     quantum.CCNOT(0, 1, 2).unwrap();
     print!("{:?}",quantum.god_observe());
+    print!("{:?}",quantum.observe());
 
     //print!("{:?} and {:?}", quantum, quantum2);
     // 看看快了多少倍

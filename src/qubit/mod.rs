@@ -1,7 +1,6 @@
 use core::panic;
 
-use crate::complex::Complex;
-use log::warn;
+use crate::complex::{self, Complex};
 use std::{f64::consts::FRAC_1_SQRT_2, vec};
 
 /*Define the Quantum register with include all the states. */
@@ -22,20 +21,38 @@ impl QuantumRegister{
         Self { qubits: n, state: v,size:_size }
     }
 
+    /*This will interact with the qubit and observe it. */
     #[allow(dead_code)]
-    pub fn observe(&mut self) -> i32 {
-        let mut prob = vec![0.0;self.size];
-        for x in 0..prob.len(){
+    pub fn observe(&mut self) -> usize {
+
+        let dart:f64 = rand::random();
+
+        let mut current_pos = 0.0;
+        let mut hit_index = 0;
+
+        for x in 0..self.state.len(){
             let real = self.state[x].re ;
             let imag = self.state[x].im ;
+            let prob = real * real + imag * imag;
 
-           prob[x] = real * real + imag * imag;
+            current_pos += prob;
+
+            if dart <= current_pos {
+                hit_index = x;
+                break;
+            }
         }
 
-        
-        100
+        for i in 0..self.size {
+            self.state[i].re = 0.0;
+            self.state[i].im = 0.0;
+        }
+
+        self.state[hit_index].re = 1.0;
+        hit_index
     }
 
+    /*This will observe the state of qubit but not collapsing it. */
     pub fn god_observe(&mut self) -> Vec<f64> {
         let mut prob = vec![0.0;self.size];
         for x in 0..prob.len(){
@@ -153,5 +170,69 @@ impl QuantumRegister{
         Ok(self)
     }
 
+    /*Theta here use radian ha :D */
+    pub fn Rz(&mut self, target:usize, theta:f64) -> Result<&mut Self, String>{
+                if target >= self.qubits {
+            return Err("...".into());
+        }
+        else{
+            let bit = self.size>>1_usize;
+            let neg_half_theta =  complex::Complex::new(f64::cos(-theta/2.0),f64::sin(-theta/2.0));
+            let pos_half_theta = complex::Complex::new(f64::cos(theta/2.0),f64::sin(theta/2.0));
+            for x in 0..bit{
+                let low = ((x>>target) <<( target+1_usize) ) ^ (x&((1_usize << target) - 1_usize));
+                let high = low | (1_usize<<target);
+                self.state[low] = self.state[low] * neg_half_theta;
+                self.state[high] = self.state[high] * pos_half_theta;
+            }
+        }
+        Ok(self)
+    }
+
+    /*Theta here use radian ha :D */
+    pub fn Rx(&mut self, target:usize, theta:f64) -> Result<&mut Self, String>{
+        if target >= self.qubits {
+            return Err("...".into());
+        }
+        else{
+            let cos_half_theta = complex::Complex::new(f64::cos(theta/2.0),0.0);
+            let sin_half_theta = complex::Complex::new(0.0,-f64::sin(theta/2.0));
+            let bit = self.size>>1_usize;
+            for x in 0..bit{
+                let low = ((x>>target) <<( target+1_usize) ) ^ (x&((1_usize << target) - 1_usize));
+                let high = low | (1_usize<<target);
+
+                let low_state = self.state[low];
+
+                self.state[low] = (low_state * cos_half_theta) + (self.state[high] * sin_half_theta);
+                self.state[high] = (low_state* sin_half_theta) + (self.state[high] * cos_half_theta);
+
+            }
+        }
+        Ok(self)
+    }
+
+        /*Theta here use radian ha :D */
+    pub fn Ry(&mut self, target:usize, theta:f64) -> Result<&mut Self, String>{
+        if target >= self.qubits {
+            return Err("...".into());
+        }
+        else{
+            let cos_half_theta = complex::Complex::new(f64::cos(theta/2.0),0.0);
+            let sin_half_theta = complex::Complex::new(f64::sin(theta/2.0),0.0);
+            let bit = self.size>>1_usize;
+            for x in 0..bit{
+                let low = ((x>>target) <<( target+1_usize) ) ^ (x&((1_usize << target) - 1_usize));
+                let high = low | (1_usize<<target);
+
+                let low_state = self.state[low];
+
+                self.state[low] = (low_state * cos_half_theta) + (self.state[high] * -sin_half_theta);
+                self.state[high] = (low_state* sin_half_theta) + (self.state[high] * cos_half_theta);
+
+            }
+        }
+        Ok(self)
+    }
 }
 
