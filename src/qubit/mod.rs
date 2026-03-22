@@ -59,7 +59,7 @@ impl QuantumRegister {
     /*This will observe the state of qubit but not collapsing it. */
     pub fn god_observe(&mut self) -> Vec<f64> {
         let mut prob = vec![0.0; self.size];
-        for (x,val) in prob.iter_mut().enumerate() {
+        for (x, val) in prob.iter_mut().enumerate() {
             let real = self.state[x].re;
             let imag = self.state[x].im;
 
