@@ -13,7 +13,7 @@ fn main() {
     print!("{}", (qu / qu2));
 
     let n = 3;
-    let mut quantum = QuantumRegister::new(n);
+    let mut quantum = QuantumRegister::new(n).unwrap();
     //let mut quantum2 = QuantumRegister::new(n);
     quantum.X(0);
     print!("{:?}", quantum.god_observe());
@@ -21,17 +21,17 @@ fn main() {
     quantum.H(1);
     quantum.CNOT(0, 1);
     quantum.CCNOT(0, 1, 2).unwrap();
-    print!("{:?}", quantum.god_observe());
-    print!("{}", quantum.observe());
+    print!("{:?}", quantum.god_observe().unwrap());
+    print!("{}", quantum.observe().unwrap());
 
     //print!("{:?} and {:?}", quantum, quantum2);
     // 看看快了多少倍
     print!("\n\n\n\n");
-    let mut q = QuantumRegister::new(2);
+    let mut q = QuantumRegister::new(2).unwrap();
     q.H(0).unwrap();
     q.Rz(0, std::f64::consts::PI / 2.0).unwrap();
     print!("{:?}", q.god_observe());
-    let mut q2 = QuantumRegister::new(5);
+    let mut q2 = QuantumRegister::new(5).unwrap();
     q2.H(0).unwrap().H(1).unwrap().H(3).unwrap();
     q2.CCNOT(0, 2, 1).unwrap();
     q2.X(4).unwrap();
@@ -40,8 +40,11 @@ fn main() {
     q2.Rz(0, 2.3);
 
     println!("{:?}", q2.god_observe());
-    let r = q2.observe_one(0);
+    let r = q2.observe_one(0).unwrap();
 
     println!("{}", r);
     println!("{:?}", q2.god_observe());
+
+    let mut qqq = QuantumRegister::new(100);
+    print!("{}", qqq.unwrap().observe().unwrap());
 }

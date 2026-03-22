@@ -1,41 +1,77 @@
 use core::panic;
+use sysinfo::System;
 
 use crate::complex::{self, Complex};
 use std::{f64::consts::FRAC_1_SQRT_2, vec};
 
-/*Define the Quantum register with include all the states. */
+///Structure of a Quantum Register
 #[repr(C)]
 #[derive(PartialEq, Clone, Debug, Default)]
 pub struct QuantumRegister {
+    ///Number of qubits to simulate
     pub qubits: usize,
+
+    ///State of the current quantum computer, this follow the number of qubits $2^n$
     pub state: Vec<Complex>,
+
+    ///Size of the state vector
     size: usize,
 }
 
 #[allow(non_snake_case)]
 impl QuantumRegister {
+    ///Create new Quantum Register with init state of the first qubit to |1>
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - Number of Qubit want to stimulate.
+    ///
+    /// # Note
+    ///
+    /// RAM needed to grow exponentially $2^n \times 16$
+    ///
+    /// # Panics
+    /// Check your computer have enough RAM to simulate or else panic.
     #[allow(dead_code)]
-    pub fn new(n: usize) -> Self {
-        let _size = 1 << n;
+    pub fn new(n: usize) -> Result<Self, String> {
+        let _size = 1_usize << n;
+
+        let mut sys = System::new_all();
+        sys.refresh_memory();
+        let memory = sys.available_memory();
+
+        if (_size * 16_usize) as u64 > memory {
+            panic!("You have {} bytes of memory and Not enough memory to simulate {} qubits! This which needs.. {} bytes of memory! This need {} more memory",memory, n , _size * 16_usize, (_size * 16_usize) as u64 - memory);
+        }
+
         let mut v = vec![Complex::new(0.0, 0.0); _size];
         //let |0...0> equals 1
         v[0] = Complex::new(1.0, 0.0);
-        Self {
+        Ok(Self {
             qubits: n,
             state: v,
             size: _size,
-        }
+        })
     }
 
-    /*This will interact with the qubit and observe it. */
+    /// Measures the entire quantum register, causing the wavefunction to collapse into a single basis state.
+    ///
+    /// The collapse is determined by the probability amplitudes of the current state.
+    /// According to Born's rule, the probability of collapsing into a specific state
+    /// is given by $P(\text{state}) = |\text{amplitude}|^2$.
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`DiracKet`] representing the observed classical value in $|X...X\rangle$ format.
     #[allow(dead_code)]
-    pub fn observe(&mut self) -> DiracKet {
+    pub fn observe(&mut self) -> Result<DiracKet, String> {
         let dart: f64 = rand::random();
 
         let mut current_pos = 0.0;
         let mut hit_index = 0;
 
         for x in 0..self.state.len() {
+            //here follow Born's rule
             let real = self.state[x].re;
             let imag = self.state[x].im;
             let prob = real * real + imag * imag;
@@ -51,35 +87,62 @@ impl QuantumRegister {
         self.state.fill(Complex { re: 0.0, im: 0.0 });
         self.state[hit_index].re = 1.0;
 
-        DiracKet {
+        Ok(DiracKet {
             value: hit_index,
             width: self.qubits,
-        }
+        })
     }
 
-    pub fn observe_one(&mut self, target: usize) -> DiracKet {
-        //high state
-        let bit = self.size >> 1_usize;
-        let mut low_prob = 0.0;
-        for x in 0..bit {
-            let low = ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
-
-            low_prob += Complex::prob(self.state[low]);
+    /// Measures a single qubit in the register, causing a partial collapse of the wavefunction.
+    ///
+    /// The probability of the outcome is determined by the squared magnitudes of the
+    /// current state's amplitudes. According to Born's rule:
+    /// $P(\text{outcome}) = \sum |\text{amplitude}_{\text{match}}|^2$.
+    ///
+    /// After measurement, the amplitudes of states inconsistent with the result are
+    /// zeroed out. The remaining amplitudes are then normalized by a factor of $1/\sqrt{P}$
+    /// to ensure the total probability remains 1.
+    ///
+    /// # Arguments
+    ///
+    /// * `target` - The index of the qubit to be measured.
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`DiracKet`] containing the classical result (0 or 1) in $|X\rangle$ format.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `target` index is out of scope.
+    #[allow(dead_code)]
+    pub fn observe_one(&mut self, target: usize) -> Result<DiracKet, String> {
+        if target >= self.qubits {
+            panic!("target out of scope!");
+        }
+        let mut high_prob = 0.0;
+        for x in 0..self.size {
+            if (x >> target) & 1_usize == 1 {
+                high_prob += Complex::prob(self.state[x]);
+            }
         }
 
         let dart: f64 = rand::random();
-        let hit_index: usize = if dart > low_prob { 1 } else { 0 };
+
+        let hit_index = if dart < high_prob { 1 } else { 0 };
 
         let final_prob = if hit_index == 0 {
-            low_prob
+            1.0 - high_prob
         } else {
-            1.0 - low_prob
+            high_prob
         };
 
         let norm_factor = final_prob.sqrt();
 
+        let mask = (1_usize << target) - 1_usize;
+        let bit = self.size >> 1_usize;
+
         for x in 0..bit {
-            let low = ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
+            let low = ((x >> target) << (target + 1_usize)) ^ (x & mask);
             let high = low | (1_usize << target);
 
             if hit_index == 0 {
@@ -93,23 +156,122 @@ impl QuantumRegister {
             }
         }
 
-        DiracKet {
+        Ok(DiracKet {
             value: hit_index,
             width: 1,
-        }
+        })
     }
 
-    /*This will observe the state of qubit but not collapsing it. */
+    /// Simultaneously measures multiple qubits in the register, leading to a partial collapse.
+    ///
+    /// The probability of each possible multi-qubit outcome is calculated by summing the
+    /// squared magnitudes of all corresponding state-vector components.
+    /// According to Born's rule:
+    /// $P(\text{outcome}) = \sum |\text{amplitude}_{\text{match}}|^2$.
+    ///
+    /// This function performs a projection onto the subspace defined by the measurement result.
+    /// States inconsistent with the observed pattern are zeroed out, and the remaining
+    /// amplitudes are normalized by $1/\sqrt{P}$ to maintain unit probability.
+    ///
+    /// # Arguments
+    ///
+    /// * `targets` - A vector of indices of the qubits to be measured.
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`DiracKet`] containing the observed multi-bit value in $|X...X\rangle$ format.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any index in `targets` is out of scope.
+    ///
+    /// /// # Examples
+    ///
+    /// ```
+    /// use quancoms::qubit::QuantumRegister;
+    ///
+    /// let mut reg = QuantumRegister::new(2).unwrap();
+    /// // ... apply gates ...
+    /// let result = reg.observe_mul(vec![0, 1]).unwrap();
+    /// println!("Measured: {}", result);
+    /// ```
     #[allow(dead_code)]
-    pub fn god_observe(&mut self) -> Vec<f64> {
-        let mut prob = vec![0.0; self.size];
-        for (x, val) in prob.iter_mut().enumerate() {
-            let real = self.state[x].re;
-            let imag = self.state[x].im;
-
-            *val = real * real + imag * imag;
+    pub fn observe_mul(&mut self, mut targets: Vec<usize>) -> Result<DiracKet, String> {
+        if targets.iter().any(|&c| c >= self.qubits) {
+            panic!("target out of scope!");
         }
-        prob
+        //sort the targets
+        targets.sort();
+        let mut prob = vec![0.0; 1_usize << targets.len()];
+
+        //loop through the 2^n states
+        for x in 0..self.size {
+            //find the target probability... we find 0 enough
+            let mut num: usize = 0;
+            //we get the state of the targets qubit with |0> state
+            for (n, i) in targets.iter().enumerate() {
+                num |= (x >> *i & 1_usize) << n;
+            }
+            prob[num] += Complex::prob(self.state[x]);
+        }
+
+        let dart: f64 = rand::random();
+
+        let mut current_pos = 0.0;
+        let mut hit_index = 0;
+
+        for (n, x) in prob.iter().enumerate() {
+            current_pos += *x;
+
+            if dart <= current_pos {
+                hit_index = n;
+                break;
+            }
+        }
+
+        let norm_factor = prob[hit_index].sqrt();
+        let mut mask: usize = 0;
+        let mut full_mask: usize = 0;
+        for (n, t) in targets.iter().enumerate() {
+            if (hit_index >> n) & 1_usize == 1_usize {
+                mask |= 1_usize << *t;
+            } //this make the mask
+            full_mask |= 1_usize << *t; //this make the full mask masking all the bit we need
+        }
+
+        for x in 0..self.size {
+            //we and with the full mask to get the pure bits then XOR to detect it match or not
+            if (x & full_mask) ^ mask == 0_usize {
+                self.state[x] = self.state[x] / norm_factor;
+            } else {
+                self.state[x] = Complex { re: 0.0, im: 0.0 };
+            }
+        }
+
+        Ok(DiracKet {
+            value: hit_index,
+            width: targets.len(),
+        })
+    }
+
+    /// Provides a "god-eye" view of the register by calculating the probability distribution
+    /// without collapsing the wavefunction.
+    ///
+    /// Unlike a standard measurement, this operation is non-destructive and
+    /// preserves the current quantum superposition. It is primarily used for
+    /// debugging and visualization (e.g., Manim animations).
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`Vec<f64>`] where each element represents the probability
+    /// of a specific basis state, calculated as $P(i) = |c_i|^2$.
+    #[allow(dead_code)]
+    pub fn god_observe(&mut self) -> Result<Vec<f64>, String> {
+        Ok(self
+            .state
+            .iter()
+            .map(|c| c.re * c.re + c.im * c.im)
+            .collect())
     }
 
     /*This block is slightly slower */

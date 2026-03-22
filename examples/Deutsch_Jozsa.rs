@@ -1,7 +1,7 @@
 use quancoms::qubit::QuantumRegister;
 
 fn main() {
-    let mut q = QuantumRegister::new(2);
+    let mut q = QuantumRegister::new(2).unwrap();
     q.X(1).unwrap();
     q.H(0).unwrap();
     q.H(1).unwrap();
@@ -12,6 +12,6 @@ fn main() {
     q.H(0).unwrap();
 
     // |0> as the test qubit
-    let result = q.observe_one(0);
+    let result = q.observe_one(0).unwrap();
     println!("测量结果: {}", result);
 }
