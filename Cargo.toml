@@ -7,3 +7,10 @@ edition = "2024"
 env_logger = "0.11.9"
 log = "0.4.29"
 rand = "0.10.0"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "gate_benchmarks"
+harness = false

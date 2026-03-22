@@ -29,7 +29,7 @@ impl QuantumRegister {
 
     /*This will interact with the qubit and observe it. */
     #[allow(dead_code)]
-    pub fn observe(&mut self) -> usize {
+    pub fn observe(&mut self) -> DiracKet {
         let dart: f64 = rand::random();
 
         let mut current_pos = 0.0;
@@ -48,13 +48,55 @@ impl QuantumRegister {
             }
         }
 
-        for i in 0..self.size {
-            self.state[i].re = 0.0;
-            self.state[i].im = 0.0;
+        self.state.fill(Complex { re: 0.0, im: 0.0 });
+        self.state[hit_index].re = 1.0;
+
+
+        DiracKet {
+            value: hit_index,
+            width: self.qubits,
+        }
+    }
+
+    pub fn observe_one(&mut self, target:usize) -> DiracKet{
+
+        //high state
+        let bit = self.size >> 1_usize;
+        let mut low_prob = 0.0;
+        for x in 0..bit {
+            let low =
+                ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
+            let high = low | (1_usize << target);
+
+            low_prob += Complex::prob(self.state[low]);
         }
 
-        self.state[hit_index].re = 1.0;
-        hit_index
+        let dart: f64 = rand::random();
+        let hit_index:usize = if dart > low_prob {1} else {0};
+
+        let final_prob = if hit_index == 0 {low_prob} else {1.0-low_prob};
+
+        let norm_factor = final_prob.sqrt();
+
+        for x in 0..bit {
+            let low =
+                ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
+            let high = low | (1_usize << target);
+
+            if hit_index == 0 {
+                // 结果是 0：保留 low 并放大，抹除 high
+                self.state[low] = self.state[low] / norm_factor;
+                self.state[high] = Complex { re: 0.0, im: 0.0 };
+            } else {
+                // 结果是 1：抹除 low，保留 high 并放大
+                self.state[low] = Complex { re: 0.0, im: 0.0 };
+                self.state[high] = self.state[high] / norm_factor;
+            }
+
+        }
+
+
+        DiracKet { value: hit_index, width: 1 }
     }
 
     /*This will observe the state of qubit but not collapsing it. */
@@ -72,7 +114,7 @@ impl QuantumRegister {
 
     /*This block is slightly slower */
     #[allow(dead_code)]
-    pub fn impl_x(&mut self, target: usize) {
+    pub fn x_native(&mut self, target: usize) {
         if target >= self.qubits {
             panic!("target out of range!");
         } else {
@@ -121,6 +163,34 @@ impl QuantumRegister {
 
                 self.state[low] = (a + b) * FRAC_1_SQRT_2;
                 self.state[high] = (a - b) * FRAC_1_SQRT_2;
+            }
+        }
+        Ok(self)
+    }
+
+    #[allow(dead_code)]
+    pub fn U(
+        &mut self,
+        target: usize,
+        U00: Complex,
+        U01: Complex,
+        U10: Complex,
+        U11: Complex,
+    ) -> Result<&mut Self, String> {
+        if target >= self.qubits {
+            return Err("...".into());
+        } else {
+            let bit = self.size >> 1_usize;
+            for x in 0..bit {
+                let low =
+                    ((x >> target) << (target + 1_usize)) ^ (x & ((1_usize << target) - 1_usize));
+                let high = low | (1_usize << target);
+
+                let a = self.state[low];
+                let b = self.state[high];
+
+                self.state[low] = (U00 * a) + (U01 * b);
+                self.state[high] = (U10 * a) + (U11 * b);
             }
         }
         Ok(self)
@@ -265,5 +335,121 @@ impl QuantumRegister {
             }
         }
         Ok(self)
+    }
+
+    #[allow(dead_code)]
+    pub fn SWAP(&mut self, q1: usize, q2: usize) -> Result<&mut Self, String> {
+        if q1 >= self.qubits || q2 >= self.qubits || q1 == q2 {
+            return Err("...".into());
+        } else {
+            let mut q = [q1, q2];
+            q.sort();
+            let bit = self.size >> 2_usize;
+            for x in 0..bit {
+                let mut qq: usize =
+                    ((x >> q[0]) << (q[0] + 1_usize)) ^ (x & ((1_usize << q[0]) - 1_usize));
+                qq = ((qq >> q[1]) << (q[1] + 1_usize)) ^ (qq & ((1_usize << q[1]) - 1_usize));
+                let low = qq | (1_usize << q[0]);
+                let high = qq | (1_usize << q[1]);
+
+                self.state.swap(low, high);
+            }
+        }
+        Ok(self)
+    }
+
+    #[allow(dead_code)]
+    pub fn CSSWAP(
+        &mut self,
+        control: usize,
+        target_1: usize,
+        target_2: usize,
+    ) -> Result<&mut Self, String> {
+        if control >= self.qubits
+            || target_1 >= self.qubits
+            || target_2 >= self.qubits
+            || target_1 == target_2
+            || control == target_1
+            || control == target_2
+        {
+            return Err("...".into());
+        } else {
+            let mut q = [control, target_1, target_2];
+            q.sort();
+            let bit = self.size >> 3_usize;
+            for x in 0..bit {
+                //insert 3 0s
+                let mut qq: usize =
+                    ((x >> q[0]) << (q[0] + 1_usize)) ^ (x & ((1_usize << q[0]) - 1_usize));
+                qq = ((qq >> q[1]) << (q[1] + 1_usize)) ^ (qq & ((1_usize << q[1]) - 1_usize));
+                qq = ((qq >> q[2]) << (q[2] + 1_usize)) ^ (qq & ((1_usize << q[2]) - 1_usize));
+                //insert control
+                qq |= 1_usize << control;
+
+                let low = qq | (1_usize << target_1);
+                let high = qq | (1_usize << target_2);
+
+                self.state.swap(low, high);
+            }
+        }
+        Ok(self)
+    }
+
+    #[allow(dead_code)]
+    pub fn MCU(
+        &mut self,
+        control: Vec<usize>,
+        target: usize,
+        U00: Complex,
+        U01: Complex,
+        U10: Complex,
+        U11: Complex,
+    ) -> Result<&mut Self, String> {
+        if target >= self.qubits || control.iter().any(|&c| c >= self.qubits || c == target) {
+            return Err("...".into());
+        } else {
+            let mut buffer = control.clone();
+            buffer.push(target);
+            buffer.sort();
+            let bit = self.size >> (buffer.len());
+            for x in 0..bit {
+                let mut high = x;
+                for val in buffer.iter() {
+                    high = (((high >> *val) << (*val + 1_usize))
+                        ^ (high & ((1_usize << *val) - 1_usize)))
+                        | (1_usize << *val);
+                }
+
+                let low = high ^ (1_usize << target);
+
+                let a = self.state[low];
+                let b = self.state[high];
+
+                self.state[low] = (U00 * a) + (U01 * b);
+                self.state[high] = (U10 * a) + (U11 * b);
+            }
+        }
+        Ok(self)
+    }
+}
+
+/**
+ * Display Structure
+ */
+#[derive(Debug, Clone, Copy)]
+pub struct DiracKet {
+    pub value: usize,
+    pub width: usize,
+}
+
+use std::fmt;
+impl fmt::Display for DiracKet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // {:0>width$b} 的意思是：
+        // 0: 补零
+        // >: 右对齐
+        // width$: 动态宽度
+        // b: 二进制格式
+        write!(f, "|{:0>width$b}>", self.value, width = self.width)
     }
 }

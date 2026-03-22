@@ -22,7 +22,7 @@ fn main() {
     quantum.CNOT(0, 1);
     quantum.CCNOT(0, 1, 2).unwrap();
     print!("{:?}", quantum.god_observe());
-    print!("{:?}", quantum.observe());
+    print!("{}", quantum.observe());
 
     //print!("{:?} and {:?}", quantum, quantum2);
     // 看看快了多少倍
@@ -31,4 +31,17 @@ fn main() {
     q.H(0).unwrap();
     q.Rz(0, std::f64::consts::PI / 2.0).unwrap();
     print!("{:?}", q.god_observe());
+    let mut q2 = QuantumRegister::new(5);
+    q2.H(0).unwrap().H(1).unwrap().H(3).unwrap();
+    q2.CCNOT(0, 2, 1).unwrap();
+    q2.X(4).unwrap();
+    q2.Rx(0, 2.55);
+    q2.Ry(0,2.3);
+    q2.Rz(0,2.3);
+    
+    println!("{:?}",q2.god_observe());
+    let r = q2.observe_one(0);
+
+    println!("{}",r);
+    println!("{:?}",q2.god_observe());
 }
