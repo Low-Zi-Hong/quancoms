@@ -274,7 +274,7 @@ impl QuantumRegister {
             .collect())
     }
 
-    /*This block is slightly slower */
+    /*This block is slightly slower do the same thing with the bellow block but slower */
     #[allow(dead_code)]
     pub fn x_native(&mut self, target: usize) {
         if target >= self.qubits {
@@ -291,12 +291,46 @@ impl QuantumRegister {
         }
     }
 
-    /*Swaping the target qubit. Swap both state at index "target" bit. */
+/// Applies the Pauli-X gate (NOT gate) to the target qubit.
+    /// 
+    /// The X gate maps the basis state $|0\rangle$ to $|1\rangle$ and vice-versa. 
+    /// Mathematically, it swaps the probability amplitudes of states where the target qubit is 0 
+    /// with those where the target qubit is 1.
+    ///
+    /// # Optimization: Bit Insertion Technique
+    ///
+    /// Standard simulation requires iterating through all $2^n$ states. However, this 
+    /// implementation optimizes the runtime to $O(2^{n-1})$ by using a bit-insertion 
+    /// technique. Instead of checking every state, we iterate through $2^{n-1}$ states 
+    /// and "inject" the target bit to find the corresponding `low` (0) and `high` (1) indices.
+    /// 
+    /// ### Bit Logic Example:
+    /// To insert a bit at index 3 of the value `10010` (binary):
+    /// 1. **Shift High Part**: `(x >> target) << (target + 1)` creates a "hole" at the target position.
+    /// 2. **Mask Low Part**: `x & ((1 << target) - 1)` extracts the bits below the target.
+    /// 3. **Combine**: XORing these two results gives the `low` index with a 0 at the target.
+    /// 4. **Set High**: ORing the `low` index with `1 << target` gives the `high` index with a 1 at the target.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `target` - The index of the qubit to apply the X gate.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error string if the `target` index is out of the register's scope.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// let mut reg = QuantumRegister::new(2).unwrap();
+    /// reg.X(0).expect("Scope error");
+    /// ```
     #[allow(dead_code)]
     pub fn X(&mut self, target: usize) -> Result<&mut Self, String> {
         if target >= self.qubits {
             return Err("...".into());
         } else {
+            //This block decrease the loop from 2^n to 2^n-1
             let bit = self.size >> 1_usize;
             for x in 0..bit {
                 let low =
@@ -308,7 +342,35 @@ impl QuantumRegister {
         Ok(self)
     }
 
-    /*Making the possibility of state at bit "target" to the same. */
+    /// Applies the Hadamard (H) gate to the target qubit.
+    /// 
+    /// The Hadamard gate creates a balanced superposition. It transforms the basis 
+    /// states according to:
+    /// $H|0\rangle = \frac{|0\rangle + |1\rangle}{\sqrt{2}}$ and $H|1\rangle = \frac{|0\rangle - |1\rangle}{\sqrt{2}}$.
+    ///
+    /// After applying this gate to a qubit in a definite state, measuring it will 
+    /// yield $|0\rangle$ or $|1\rangle$ with an equal probability of $0.5$.
+    ///
+    /// # Optimization: Bit Insertion Technique
+    ///
+    /// This implementation utilizes the same bit-insertion optimization as the [`Self::X`] gate, 
+    /// reducing the required iterations from $2^n$ to $2^{n-1}$. 
+    /// Please refer to the [`Self::X`] documentation for a detailed explanation of the indexing logic.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `target` - The index of the qubit to apply the H gate.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error string if the `target` index is out of the register's scope.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// let mut reg = QuantumRegister::new(1).unwrap();
+    /// reg.H(0).expect("Scope error");
+    /// ```
     #[allow(dead_code)]
     pub fn H(&mut self, target: usize) -> Result<&mut Self, String> {
         if target >= self.qubits {
@@ -330,6 +392,40 @@ impl QuantumRegister {
         Ok(self)
     }
 
+    /// Applies a generic $2 \times 2$ unitary gate (U gate) to the target qubit.
+    /// 
+    /// This is the generalized form of all single-qubit operations. It performs 
+    /// the following matrix multiplication on the subspace of the target qubit:
+    /// 
+    /// $$
+    /// \begin{pmatrix} \psi_{low}' \\ \psi_{high}' \end{pmatrix} = 
+    /// \begin{pmatrix} U_{00} & U_{01} \\ U_{10} & U_{11} \end{pmatrix}
+    /// \begin{pmatrix} \psi_{low} \\ \psi_{high} \end{pmatrix}
+    /// $$
+    ///
+    /// # Optimization: Bit Insertion Technique
+    /// 
+    /// Similar to the [`Self::X`] and [`Self::H`] gates, this function uses bit-insertion 
+    /// to achieve $O(2^{n-1})$ efficiency by only iterating through half of the state vector.
+    ///
+    /// # Arguments
+    /// 
+    /// * `target` - The index of the qubit to apply the U gate.
+    /// * `U00`, `U01`, `U10`, `U11` - The four complex components of the unitary matrix.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error string if the `target` index is out of the register's scope.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// let mut reg = QuantumRegister::new(1).unwrap();
+    /// // Example: Identity gate (does nothing)
+    /// let c1 = Complex::new(1.0, 0.0);
+    /// let c0 = Complex::new(0.0, 0.0);
+    /// reg.U(0, c1, c0, c0, c1).expect("Scope error");
+    /// ```
     #[allow(dead_code)]
     pub fn U(
         &mut self,
@@ -358,7 +454,49 @@ impl QuantumRegister {
         Ok(self)
     }
 
-    /*If the "control" bit of the state is 1, then swap at the "target" bit.  */
+    /// Applies the Controlled-NOT (CNOT) gate to the target qubit, controlled by the control qubit.
+    /// 
+    /// The CNOT gate flips the target qubit if and only if the control qubit is in the $|1\rangle$ state.
+    /// It maps the basis states as follows:
+    /// - $|0, 0\rangle \to |0, 0\rangle$
+    /// - $|0, 1\rangle \to |0, 1\rangle$
+    /// - $|1, 0\rangle \to |1, 1\rangle$
+    /// - $|1, 1\rangle \to |1, 0\rangle$
+    ///
+    /// # Optimization: Double Bit Insertion Technique
+    /// 
+    /// Instead of a naive $O(2^n)$ scan, this implementation optimizes the process to $O(2^{n-2})$ 
+    /// by isolating the subspace where the control qubit is fixed to $|1\rangle$.
+    ///
+    /// ### The "Two Holes" Logic:
+    /// 1. We iterate through $2^{n-2}$ states, effectively "skipping" the two qubits involved.
+    /// 2. **Stable Insertion**: We perform bit-insertion for the `control` and `target` bits 
+    ///    sequentially. We sort the indices to ensure that inserting a bit at a lower position 
+    ///    does not shift the intended index of a higher-order bit.
+    /// 3. **Fixing the Control**: After the first insertion at the `control` position, 
+    ///    we force that bit to 1. This ensures we only operate on the states that satisfy 
+    ///    the CNOT condition.
+    /// 4. **Target Mapping**: The second insertion creates a pair of indices:
+    ///    - `low`: Where `control=1` and `target=0`.
+    ///    - `high`: Where `control=1` and `target=1`.
+    /// 5. **The Swap**: We swap the amplitudes of `low` and `high` to perform the NOT operation.
+    ///
+    /// # Arguments
+    /// 
+    /// * `control` - The index of the qubit used as the control.
+    /// * `target` - The index of the qubit to be flipped.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error if the indices are out of scope or if `control == target`.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// let mut reg = QuantumRegister::new(2).unwrap();
+    /// // Create state |10>, CNOT(0, 1) will result in |11>
+    /// reg.X(0)?.CNOT(0, 1).expect("Scope error");
+    /// ```
     #[allow(dead_code)]
     pub fn CNOT(&mut self, control: usize, target: usize) -> Result<&mut Self, String> {
         if target >= self.qubits || control >= self.qubits || control == target {
@@ -391,6 +529,46 @@ impl QuantumRegister {
         Ok(self)
     }
 
+    /// Applies the CCNOT (Toffoli) gate to the target qubit, controlled by two qubits.
+    /// 
+    /// The target qubit is flipped (X gate) if and only if both `control1` and `control2` 
+    /// are in the |1> state. This is a universal gate for classical logic.
+    ///
+    /// # Optimization: Triple Bit Insertion Technique
+    ///
+    /// To avoid scanning all $2^n$ states, this implementation uses a triple-layer 
+    /// bit-insertion technique, reducing the loop count by a factor of $2^3 = 8$ 
+    /// (from $2^n$ to $2^{n-3}$).
+    /// 
+    /// # Logic Breakdown:
+    /// 1. **Space Reduction**: We loop through 2^(n-3) states, focusing only on the 
+    ///    subspace where the three bits (c1, c2, target) are flexible.
+    /// 2. **Sequential Injection**: By sorting `arr`, we can inject a '1' into each 
+    ///    target position one by one. Sorting ensures that inserting a bit at a 
+    ///    lower index doesn't shift the intended position of a higher index.
+    /// 3. **The "High" State**: After three injections, the `high` index represents 
+    ///    the state where `control1=1`, `control2=1`, and `target=1`.
+    /// 4. **The "Low" State**: By XORing the `target` bit, we derive the `low` index 
+    ///    where `control1=1`, `control2=1`, and `target=0`.
+    /// 5. **The Swap**: We swap these two amplitudes to perform the flip.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `control1` - The first control qubit index.
+    /// * `control2` - The second control qubit index.
+    /// * `target` - The target qubit index to be flipped.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error if any index is out of scope or if indices overlap.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// let mut reg = QuantumRegister::new(3).unwrap();
+    /// // If state is |110>, CCNOT(0, 1, 2) results in |111>
+    /// reg.X(0)?.X(1)?.CCNOT(0, 1, 2).expect("Scope error");
+    /// ```
     #[allow(dead_code)]
     pub fn CCNOT(
         &mut self,
@@ -428,6 +606,21 @@ impl QuantumRegister {
     }
 
     /*Theta here use radian ha :D */
+    /// Rotates the target qubit around the Z-axis of the Bloch sphere.
+    /// 
+    /// The $R_z$ gate introduces a relative phase shift between $|0\rangle$ and $|1\rangle$.
+    /// The transformation matrix is:
+    /// $$R_z(\theta) = \begin{pmatrix} e^{-i\theta/2} & 0 \\ 0 & e^{i\theta/2} \end{pmatrix}$$
+    ///
+    /// # Arguments
+    /// 
+    /// * `target` - The index of the qubit to apply the rotation.
+    /// * `theta` - The rotation angle in **radians**.
+    /// 
+    /// # Optimization: Bit Insertion Technique
+    /// 
+    /// Achieves $O(2^{n-1})$ complexity by isolating the subspace where the target bit is toggled,
+    /// performing the diagonal phase multiplication without full-state iteration.
     #[allow(dead_code)]
     pub fn Rz(&mut self, target: usize, theta: f64) -> Result<&mut Self, String> {
         if target >= self.qubits {
@@ -450,6 +643,17 @@ impl QuantumRegister {
     }
 
     /*Theta here use radian ha :D */
+    /// Rotates the target qubit around the X-axis of the Bloch sphere.
+    /// 
+    /// This gate creates a superposition by rotating the state between the 
+    /// computational basis states $|0\rangle$ and $|1\rangle$.
+    /// The transformation matrix is:
+    /// $$R_x(\theta) = \begin{pmatrix} \cos(\theta/2) & -i\sin(\theta/2) \\ -i\sin(\theta/2) & \cos(\theta/2) \end{pmatrix}$$
+    ///
+    /// # Arguments
+    /// 
+    /// * `target` - The index of the qubit to apply the rotation.
+    /// * `theta` - The rotation angle in **radians**.
     #[allow(dead_code)]
     pub fn Rx(&mut self, target: usize, theta: f64) -> Result<&mut Self, String> {
         if target >= self.qubits {
@@ -475,6 +679,17 @@ impl QuantumRegister {
     }
 
     /*Theta here use radian ha :D */
+    /// Rotates the target qubit around the X-axis of the Bloch sphere.
+    /// 
+    /// This gate creates a superposition by rotating the state between the 
+    /// computational basis states $|0\rangle$ and $|1\rangle$.
+    /// The transformation matrix is:
+    /// $$R_x(\theta) = \begin{pmatrix} \cos(\theta/2) & -i\sin(\theta/2) \\ -i\sin(\theta/2) & \cos(\theta/2) \end{pmatrix}$$
+    ///
+    /// # Arguments
+    /// 
+    /// * `target` - The index of the qubit to apply the rotation.
+    /// * `theta` - The rotation angle in **radians**.
     #[allow(dead_code)]
     pub fn Ry(&mut self, target: usize, theta: f64) -> Result<&mut Self, String> {
         if target >= self.qubits {
@@ -499,6 +714,26 @@ impl QuantumRegister {
         Ok(self)
     }
 
+    /// Swaps the quantum states of two qubits.
+    /// 
+    /// The SWAP gate exchanges the probability amplitudes between states where 
+    /// the two qubits differ ($|01\rangle \leftrightarrow |10\rangle$), while 
+    /// leaving $|00\rangle$ and $|11\rangle$ unchanged.
+    ///
+    /// # Optimization: Double Bit Insertion
+    /// 
+    /// By using double bit-insertion, this implementation reduces the loop count 
+    /// from $2^n$ to $2^{n-2}$. 
+    /// 1. **Two Holes**: We iterate through $2^{n-2}$ states and insert "holes" 
+    ///    at the positions of `q1` and `q2`.
+    /// 2. **Targeting Asymmetry**: We construct two specific indices:
+    ///    - `low`: Qubit 1 is 1, Qubit 2 is 0.
+    ///    - `high`: Qubit 1 is 0, Qubit 2 is 1.
+    /// 3. **The Swap**: We swap the amplitudes of these two indices.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `q1`, `q2` - The indices of the two qubits to be swapped.
     #[allow(dead_code)]
     pub fn SWAP(&mut self, q1: usize, q2: usize) -> Result<&mut Self, String> {
         if q1 >= self.qubits || q2 >= self.qubits || q1 == q2 {
@@ -520,6 +755,30 @@ impl QuantumRegister {
         Ok(self)
     }
 
+    /// Applies a Controlled-SWAP gate, also known as the Fredkin gate.
+    /// 
+    /// This gate swaps the states of `target_1` and `target_2` if and only if 
+    /// the `control` qubit is $|1\rangle$.
+    /// 
+    /// # Optimization: Triple Bit Insertion
+    /// 
+    /// This implementation achieves $O(2^{n-3})$ efficiency by isolating the subspace 
+    /// where the `control` bit is fixed to 1 and the two targets are flexible.
+    /// 
+    /// ### Logic Breakdown:
+    /// 1. **Triple Insertion**: We insert three bits at the `control`, `target_1`, 
+    ///    和 `target_2` positions.
+    /// 2. **Fixing Control**: We force the `control` bit to 1.
+    /// 3. **Defining the Pair**: 
+    ///    - `low`: `control=1`, `target_1=1`, `target_2=0`
+    ///    - `high`: `control=1`, `target_1=0`, `target_2=1`
+    /// 4. **Conditional Swap**: Swapping these two indices effectively performs 
+    ///     the swap only when the control condition is met.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `control` - The index of the control qubit.
+    /// * `target_1`, `target_2` - The indices of the two qubits to swap.
     #[allow(dead_code)]
     pub fn CSSWAP(
         &mut self,
@@ -557,6 +816,40 @@ impl QuantumRegister {
         Ok(self)
     }
 
+    /// Applies a Multi-Controlled Unitary (MCU) gate to the target qubit.
+    /// 
+    /// This is the most generalized gate in the simulator. It applies a $2 \times 2$ 
+    /// unitary matrix $U$ to the target qubit if and only if **all** control qubits 
+    /// are in the $|1\rangle$ state.
+    ///
+    /// # Mathematical Transformation
+    /// 
+    /// For the subspace where all control bits = 1:
+    /// $$ \begin{pmatrix} \psi_{low}' \\ \psi_{high}' \end{pmatrix} = 
+    /// \begin{pmatrix} U_{00} & U_{01} \\ U_{10} & U_{11} \end{pmatrix} 
+    /// \begin{pmatrix} \psi_{low} \\ \psi_{high} \end{pmatrix} $$
+    /// 
+    /// # Optimization: N-Level Bit Injection
+    /// 
+    /// This function generalizes the bit-insertion technique to $k$ control qubits. 
+    /// It achieves an optimal complexity of $O(2^{n-(k+1)})$, where $n$ is the total 
+    /// number of qubits and $k$ is the number of control qubits.
+    /// 
+    /// ### Logic Breakdown:
+    /// 1. **Index Compression**: We iterate through a reduced state space of size $2^{n-(k+1)}$.
+    /// 2. **Sequential Injection**: We collect all involved qubits (controls + target) into 
+    ///    a `buffer` and sort them. We then inject a '1' bit into each position sequentially 
+    ///    to build the `high` index.
+    /// 3. **High/Low Pairing**: 
+    ///    - `high`: The index where all controls = 1 and target = 1.
+    ///    - `low`: Derived by flipping the `target` bit of `high` (where all controls = 1 and target = 0).
+    /// 4. **Unitary Application**: Performs the complex matrix multiplication on the identified pair.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `control` - A vector of indices for the control qubits.
+    /// * `target` - The index of the target qubit.
+    /// * `U00`, `U01`, `U10`, `U11` - Components of the $2 \times 2$ unitary matrix.
     #[allow(dead_code)]
     pub fn MCU(
         &mut self,
