@@ -385,6 +385,8 @@ impl QuantumRegister {
     /// # Examples
     ///
     /// ```
+    /// # use quancoms::qubit::QuantumRegister;
+    /// # use quancoms::complex::Complex;
     /// let mut reg = QuantumRegister::new(1).unwrap();
     /// reg.H(0).expect("Scope error");
     /// ```
@@ -516,7 +518,7 @@ impl QuantumRegister {
     /// # use quancoms::complex::Complex;
     /// let mut reg = QuantumRegister::new(2).unwrap();
     /// // Create state |10>, CNOT(0, 1) will result in |11>
-    /// reg.X(0)?.CNOT(0, 1).expect("Scope error");
+    /// reg.X(0).unwrap().CNOT(0, 1).expect("Scope error");
     /// ```
     #[allow(dead_code)]
     pub fn CNOT(&mut self, control: usize, target: usize) -> Result<&mut Self, String> {
@@ -590,7 +592,7 @@ impl QuantumRegister {
     /// # use quancoms::complex::Complex;
     /// let mut reg = QuantumRegister::new(3).unwrap();
     /// // If state is |110>, CCNOT(0, 1, 2) results in |111>
-    /// reg.X(0)?.X(1)?.CCNOT(0, 1, 2).expect("Scope error");
+    /// reg.X(0).unwrap().X(1).unwrap().CCNOT(0, 1, 2).expect("Scope error");
     /// ```
     #[allow(dead_code)]
     pub fn CCNOT(
