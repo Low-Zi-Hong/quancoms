@@ -143,12 +143,13 @@ fn test_bell_state_observation() {
 #[test]
 fn test_observe_one_consistency() {
     let mut reg = QuantumRegister::new(2).unwrap();
-    reg.state[0] = Complex::new(0.707106, 0.0);
-    reg.state[3] = Complex::new(0.707106, 0.0);
+    reg.X(0).expect("msg").CNOT(0, 1).unwrap();
 
     let res = reg.observe_one(0).unwrap();
     // 如果第 0 位观测到 0，那么整个态必须坍缩到 |00>
+    print!("{}", res);
     if res.value == 0 {
+        print!("{:?}", reg.state);
         assert!((reg.state[0].re - 1.0).abs() < 1e-6);
         assert!(reg.state[3].re == 0.0);
     } else {
