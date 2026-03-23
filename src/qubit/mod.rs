@@ -338,7 +338,7 @@ impl QuantumRegister {
     /// ```
     /// # use quancoms::qubit::QuantumRegister;
     /// # use quancoms::complex::Complex;
-    /// 
+    ///
     /// let mut reg = QuantumRegister::new(2).unwrap();
     /// reg.X(0).expect("Scope error");
     /// ```
