@@ -2,6 +2,13 @@
 name = "quancoms-core"
 version = "0.1.0"
 edition = "2024"
+description = "The high-performance core engine for Quancoms quantum simulator."
+license = "MIT"
+repository = "https://github.com/Low-Zi-Hong/quancoms"
+homepage = "https://github.com/Low-Zi-Hong/quancoms"
+readme = "../../README.md"
+keywords = ["quantum", "simulator", "physics"]
+categories = ["science", "emulators"]
 
 [dependencies]
 rand = "0.10.0"

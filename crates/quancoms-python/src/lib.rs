@@ -1,10 +1,8 @@
-use std::f32::consts::E;
-
 use pyo3::{exceptions::PyValueError, prelude::*};
 use quancoms_core::qubit::QuantumRegister as CoreRegister;
 
 #[pyclass]
-struct QuantumRegister{
+struct QuantumRegister {
     inner: CoreRegister,
 }
 
@@ -12,16 +10,16 @@ struct QuantumRegister{
 impl QuantumRegister {
     #[new]
     fn new(n: usize) -> PyResult<Self> {
-        match CoreRegister::new(n){
+        match CoreRegister::new(n) {
             Ok(core) => Ok(QuantumRegister { inner: core }),
             Err(err_msg) => Err(PyValueError::new_err(err_msg)),
         }
     }
 
-    fn h(mut slf: PyRefMut<'_,Self>,target:usize) -> PyResult<PyRefMut<'_,Self>>{
-        slf.inner.H(target).map_err(|e| {
-            pyo3::exceptions::PyValueError::new_err(E)
-        })?;
+    fn h(mut slf: PyRefMut<'_, Self>, target: usize) -> PyResult<PyRefMut<'_, Self>> {
+        slf.inner
+            .H(target)
+            .map_err(pyo3::exceptions::PyValueError::new_err)?;
 
         Ok(slf)
     }
