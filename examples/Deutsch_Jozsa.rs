@@ -1,7 +1,7 @@
 use quancoms::qubit::QuantumRegister;
 
 fn main() {
-    let mut q = QuantumRegister::new(2).unwrap();
+    let mut q = QuantumRegister::new(28).unwrap();
     q.X(1).unwrap();
     q.H(0).unwrap();
     q.H(1).unwrap();

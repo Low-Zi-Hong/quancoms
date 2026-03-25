@@ -153,7 +153,7 @@ impl QuantumRegister {
 
         let mask = (1_usize << target) - 1_usize;
         let bit = self.size >> 1_usize;
-
+        
         for x in 0..bit {
             let low = ((x >> target) << (target + 1_usize)) ^ (x & mask);
             let high = low | (1_usize << target);

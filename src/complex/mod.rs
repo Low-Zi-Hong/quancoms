@@ -107,3 +107,7 @@ impl Complex {
         Self { re, im }
     }
 }
+
+struct SendPtr<T>(*mut T);
+unsafe impl<T> Send for SendPtr<T> {}
+unsafe impl<T> Sync for SendPtr<T> {}
