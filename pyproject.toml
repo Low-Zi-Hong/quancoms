@@ -1,0 +1,25 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "quancoms"
+version = "0.0.1"
+requires-python = ">=3.8"
+authors = [
+  {name = "Low Zi Hong", email = "lowzihong11@gmail.com"},
+]
+description = "A quantom computer simulator."
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["quantum", "simulator", "rust", "pyo3"]
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+[tool.maturin]
+manifest-path = "crates/quancoms-python/Cargo.toml"
+module-name = "quancoms"
+binding = "pyo3"

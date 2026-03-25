@@ -153,7 +153,7 @@ impl QuantumRegister {
 
         let mask = (1_usize << target) - 1_usize;
         let bit = self.size >> 1_usize;
-        
+
         for x in 0..bit {
             let low = ((x >> target) << (target + 1_usize)) ^ (x & mask);
             let high = low | (1_usize << target);
@@ -201,8 +201,8 @@ impl QuantumRegister {
     /// /// # Examples
     ///
     /// ```
-    /// # use quancoms::qubit::QuantumRegister;
-    /// # use quancoms::complex::Complex;
+    /// # use quancoms_core::qubit::QuantumRegister;
+    /// # use quancoms_core::complex::Complex;
     ///
     /// let mut reg = QuantumRegister::new(2).unwrap();
     /// // ... apply gates ...
@@ -336,8 +336,8 @@ impl QuantumRegister {
     /// # Examples
     ///
     /// ```
-    /// # use quancoms::qubit::QuantumRegister;
-    /// # use quancoms::complex::Complex;
+    /// # use quancoms_core::qubit::QuantumRegister;
+    /// # use quancoms_core::complex::Complex;
     ///
     /// let mut reg = QuantumRegister::new(2).unwrap();
     /// reg.X(0).expect("Scope error");
@@ -385,8 +385,8 @@ impl QuantumRegister {
     /// # Examples
     ///
     /// ```
-    /// # use quancoms::qubit::QuantumRegister;
-    /// # use quancoms::complex::Complex;
+    /// # use quancoms_core::qubit::QuantumRegister;
+    /// # use quancoms_core::complex::Complex;
     /// let mut reg = QuantumRegister::new(1).unwrap();
     /// reg.H(0).expect("Scope error");
     /// ```
@@ -439,8 +439,8 @@ impl QuantumRegister {
     /// # Examples
     ///
     /// ```
-    /// # use quancoms::qubit::QuantumRegister;
-    /// # use quancoms::complex::Complex;
+    /// # use quancoms_core::qubit::QuantumRegister;
+    /// # use quancoms_core::complex::Complex;
     /// let mut reg = QuantumRegister::new(1).unwrap();
     /// // Example: Identity gate (does nothing)
     /// let c1 = Complex::new(1.0, 0.0);
@@ -514,8 +514,8 @@ impl QuantumRegister {
     /// # Examples
     ///
     /// ```
-    /// # use quancoms::qubit::QuantumRegister;
-    /// # use quancoms::complex::Complex;
+    /// # use quancoms_core::qubit::QuantumRegister;
+    /// # use quancoms_core::complex::Complex;
     /// let mut reg = QuantumRegister::new(2).unwrap();
     /// // Create state |10>, CNOT(0, 1) will result in |11>
     /// reg.X(0).unwrap().CNOT(0, 1).expect("Scope error");
@@ -588,8 +588,8 @@ impl QuantumRegister {
     /// # Examples
     ///
     /// ```
-    /// # use quancoms::qubit::QuantumRegister;
-    /// # use quancoms::complex::Complex;
+    /// # use quancoms_core::qubit::QuantumRegister;
+    /// # use quancoms_core::complex::Complex;
     /// let mut reg = QuantumRegister::new(3).unwrap();
     /// // If state is |110>, CCNOT(0, 1, 2) results in |111>
     /// reg.X(0).unwrap().X(1).unwrap().CCNOT(0, 1, 2).expect("Scope error");

@@ -1,18 +1,6 @@
-[package]
-name = "quancoms"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-env_logger = "0.11.9"
-log = "0.4.29"
-rand = "0.10.0"
-rayon = "1.11.0"
-sysinfo = "0.38.4"
-
-[dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
-
-[[bench]]
-name = "gate_benchmarks"
-harness = false
+[workspace]
+members = [
+    "crates/quancoms-core",
+    "crates/quancoms-python",
+]
+resolver = "3"

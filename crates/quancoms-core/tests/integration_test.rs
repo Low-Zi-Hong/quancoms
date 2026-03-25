@@ -1,5 +1,5 @@
-use quancoms::complex::Complex;
-use quancoms::qubit::{self, QuantumRegister};
+use quancoms_core::complex::Complex;
+use quancoms_core::qubit::{self, QuantumRegister};
 
 #[test]
 fn test_X() {

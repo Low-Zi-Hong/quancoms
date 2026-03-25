@@ -1,5 +1,5 @@
 use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use quancoms::qubit::QuantumRegister;
+use quancoms_core::qubit::QuantumRegister;
 
 #[allow(non_snake_case)]
 fn bench_X_comparison(c: &mut Criterion) {

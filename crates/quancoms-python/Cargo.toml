@@ -1,0 +1,12 @@
+[package]
+name = "quancoms-py"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pyo3 = { version = "0.28.2", features = ["extension-module"] }
+quancoms-core = {path = "../quancoms-core"}
+
+[lib]
+name = "quancoms"
+crate-type = ["cdylib"]

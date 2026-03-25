@@ -1,4 +1,4 @@
-use quancoms::qubit::QuantumRegister;
+use quancoms_core::qubit::QuantumRegister;
 
 fn main() {
     let mut q = QuantumRegister::new(28).unwrap();
