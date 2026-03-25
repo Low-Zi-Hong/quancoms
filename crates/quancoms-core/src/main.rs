@@ -12,11 +12,10 @@ fn main() {
 
     for (n, x) in sec.iter_mut().enumerate() {
         let mut q_ok = QuantumRegister::new(n);
-        if (q_ok.is_ok()) {
-            let mut q = q_ok.unwrap();
+        if let Ok(mut q) = q_ok {
             let start = Instant::now();
             for i in 0..n {
-                q.H(i).unwrap(); // Assuming .h() is your Hadamard method
+                q.H(i).unwrap();
             }
             for i in 0..n.saturating_sub(1) {
                 q.CNOT(i, i + 1_usize).unwrap();
