@@ -1,6 +1,6 @@
 [package]
 name = "quancoms-core"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2024"
 description = "The high-performance core engine for Quancoms quantum simulator."
 license = "MIT"

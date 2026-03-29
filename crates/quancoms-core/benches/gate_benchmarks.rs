@@ -5,12 +5,12 @@ use quancoms_core::qubit::QuantumRegister;
 fn bench_X_comparison(c: &mut Criterion) {
     let mut group = c.benchmark_group("X_Optimization");
 
-    for n in 4..=20 {
-        group.bench_with_input(BenchmarkId::new("Naive_2n", n), &n, |b, &n| {
+    for n in 4..=10 {
+        group.bench_with_input(BenchmarkId::new("New_Bit_Mask", n), &n, |b, &n| {
             let mut q = QuantumRegister::new(n).unwrap();
             b.iter(|| {
                 // 这里调用你那个没优化的老算法
-                black_box(q.x_native(0));
+                black_box(q.X_test(n / 2)).unwrap();
             });
         });
 
@@ -18,7 +18,7 @@ fn bench_X_comparison(c: &mut Criterion) {
             let mut q = QuantumRegister::new(n).unwrap();
             b.iter(|| {
                 // 这里调用你优化的新算法
-                black_box(q.X(0).unwrap());
+                black_box(q.X(n / 2).unwrap());
             });
         });
     }
