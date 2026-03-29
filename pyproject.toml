@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "quancoms"
-version = "0.0.1"
+version = "0.1.2"
 requires-python = ">=3.8"
 authors = [
   {name = "Low Zi Hong", email = "lowzihong11@gmail.com"},
