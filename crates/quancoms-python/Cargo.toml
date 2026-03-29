@@ -1,6 +1,6 @@
 [package]
 name = "quancoms-py"
-version = "0.1.2"
+version = "0.1.5"
 edition = "2024"
 
 [dependencies]

@@ -508,7 +508,7 @@ dependencies = [
 
 [[package]]
 name = "quancoms-core"
-version = "0.1.2"
+version = "0.1.5"
 dependencies = [
  "criterion",
  "rand",
@@ -518,7 +518,7 @@ dependencies = [
 
 [[package]]
 name = "quancoms-py"
-version = "0.1.2"
+version = "0.1.5"
 dependencies = [
  "pyo3",
  "quancoms-core",
