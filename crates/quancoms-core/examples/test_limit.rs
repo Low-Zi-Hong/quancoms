@@ -1,4 +1,4 @@
-use crate::qubit::QuantumRegister;
+use quancoms_core::qubit::QuantumRegister;
 
 use std::time::Instant;
 
