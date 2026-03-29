@@ -305,6 +305,25 @@ impl QuantumRegister {
         }
     }
 
+    #[allow(dead_code)]
+    pub fn X_test(&mut self, target: usize) -> Result<&mut Self, String> {
+        if target >= self.qubits {
+            return Err("...".into());
+        } else {
+            //This block decrease the loop from 2^n to 2^n-1
+            let mask = 1_usize << target;
+            let bit = self.size;
+            let mut x = 0;
+            while x < bit - 1 {
+                x |= mask;
+                let low = x ^ mask;
+                self.state.swap(low, x);
+                x += 1;
+            }
+        }
+        Ok(self)
+    }
+
     /// Applies the Pauli-X gate (NOT gate) to the target qubit.
     ///
     /// The X gate maps the basis state $|0\rangle$ to $|1\rangle$ and vice-versa.
@@ -607,7 +626,7 @@ impl QuantumRegister {
             || control1 == target
             || control1 == control2
         {
-            return Err("...".into());
+            return Err("input out of scope.".into());
         } else {
             let bit = self.size >> 3_usize;
             let mut arr = [control1, control2, target];
